@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroGuardian Logistics | Safety Management System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts: Added 'Great Vibes' for signature -->
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chosen Palette: AeroGuardian Corporate 
+         Primary: #1e3a8a (Blue-900) - Authority/Safety
+         Secondary: #d97706 (Amber-600) - Caution/Highlights
+         Background: #f8fafc (Slate-50) - Clean reading surface
+    -->
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Constraint for large screens */
+            height: 300px;
+            margin: 0 auto; /* Center horizontally */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Custom Scrollbar for panels */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Interactive Grid Cell Hover Effects - Enhanced Pop */
+        .matrix-cell {
+            transition: all 0.2s ease-in-out;
+        }
+        .matrix-cell:hover {
+            transform: scale(1.1); /* Increased scale for impact */
+            box-shadow: 0 6px 10px -1px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            border: 2px solid #fff; /* White border on hover */
+        }
+        
+        /* Tab Active State - Enhanced with a thicker underline */
+        .tab-btn.active {
+            border-bottom: 3px solid #d97706;
+            color: #1e3a8a;
+            font-weight: 700;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        /* Dark Mode specific background transitions for a smoother feel */
+        .bg-white, .bg-slate-50, .bg-slate-100 {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Fade-in Animation for Content Sections */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen dark:bg-slate-900 dark:text-slate-200">
+
+    <!-- Navigation / Header -->
+    <header class="bg-white shadow-xl sticky top-0 z-50 dark:bg-slate-800 dark:shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand -->
+                <div class="flex-shrink-0 flex items-center gap-3">
+                    <!-- Updated SVG Logo: Shield with Aircraft Silhouette -->
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" fill="#1e3a8a"/>
+                        <path d="M12 6L14.5 10.5H19L16 13.5L17 18L12 15.5L7 18L8 13.5L5 10.5H9.5L12 6Z" fill="#d97706" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+                    </svg>
+                    <div>
+                        <!-- Added hover effect -->
+                        <h1 class="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight hover:text-blue-700 dark:hover:text-amber-400 transition-colors">AeroGuardian</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-wide">LOGISTICS SMS PORTAL</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex space-x-8">
+                    <!-- NEW TAB: Company Profile -->
+                    <button onclick="switchTab('company')" id="nav-company" class="tab-btn px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:text-slate-100">Company Profile</button>
+                    <!-- POLICY TAB ADJUSTED -->
+                    <button onclick="switchTab('policy')" id="nav-policy" class="tab-btn px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:text-slate-100">Policy Pillars</button>
+                    <button onclick="switchTab('srm')" id="nav-srm" class="tab-btn px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:text-slate-100">Risk Mgmt</button>
+                    <button onclick="switchTab('assurance')" id="nav-assurance" class="tab-btn px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:text-slate-100">Assurance</button>
+                    <button onclick="switchTab('promotion')" id="nav-promotion" class="tab-btn px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:text-slate-100">Promotion</button>
+                </nav>
+
+                <!-- Mobile Menu Button (Functional Placeholder) & Theme Toggle -->
+                <div class="flex items-center gap-4">
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle" onclick="toggleTheme()" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white focus:outline-none transition-colors">
+                        <!-- Sun Icon (Visible in Dark Mode) -->
+                        <svg id="sun-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <!-- Moon Icon (Visible in Light Mode) -->
+                        <svg id="moon-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+
+                    <!-- Mobile Menu Button -->
+                    <div class="md:hidden flex items-center">
+                        <button onclick="toggleMobileMenu()" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 focus:outline-none">
+                            <span class="text-2xl">☰</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Nav Panel -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="switchTab('company')" class="block w-full text-left px-3 py-2 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md">Company Profile</button>
+                <button onclick="switchTab('policy')" class="block w-full text-left px-3 py-2 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md">Policy Pillars</button>
+                <button onclick="switchTab('srm')" class="block w-full text-left px-3 py-2 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md">Risk Mgmt</button>
+                <button onclick="switchTab('assurance')" class="block w-full text-left px-3 py-2 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md">Assurance</button>
+                <button onclick="switchTab('promotion')" class="block w-full text-left px-3 py-2 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md">Promotion</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+
+        <!-- Download Button Row - REMOVED -->
+        <div class="flex justify-end mb-8 h-10">
+            <!-- Space holder for alignment or remove if not needed -->
+        </div>
+
+
+        <!-- Dynamic Content Sections -->
+
+        <!-- 1. COMPANY PROFILE SECTION (NEW) -->
+        <div id="section-company" class="content-section animate-fade-in">
+            <section class="mb-10 text-center sm:text-left border-b border-slate-200 dark:border-slate-700 pb-6">
+                <h2 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 sm:text-4xl">AeroGuardian Logistics (AGL)</h2>
+                <p class="mt-3 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
+                    AeroGuardian Logistics is a leading global air freight carrier specializing in high-value and time-critical cargo. Our core mission is to deliver exceptional service while maintaining an absolute commitment to safety in all operational domains.
+                </p>
+                <div class="mt-6 flex flex-wrap gap-4 text-sm font-medium">
+                    <span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full dark:bg-blue-900 dark:text-blue-100 shadow-sm">
+                        <span class="font-bold">Fleet Size:</span> 12 Dedicated Cargo Aircraft
+                    </span>
+                    <span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full dark:bg-blue-900 dark:text-blue-100 shadow-sm">
+                        <span class="font-bold">Base of Operations:</span> Global Hub Network
+                    </span>
+                    <span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full dark:bg-blue-900 dark:text-blue-100 shadow-sm">
+                        <span class="font-bold">SMS Status:</span> Fully Implemented (ICAO Annex 19 Compliant)
+                    </span>
+                </div>
+            </section>
+            
+            <!-- CEO Safety Policy Statement (Enhanced with gradient and ring) -->
+            <div class="bg-gradient-to-br from-blue-50 to-white rounded-xl p-8 border border-blue-200 ring-4 ring-blue-50/50 mb-10 shadow-xl dark:from-slate-800 dark:to-slate-900 dark:border-blue-900 dark:ring-blue-950">
+                <h3 class="text-2xl font-extrabold text-blue-800 dark:text-blue-300 mb-4 flex items-center">
+                    <span class="mr-3 text-4xl">🛡️</span> Accountable Executive's SMS Commitment
+                </h3>
+                <p class="text-lg text-slate-700 dark:text-slate-300 italic border-l-4 border-amber-500 pl-4 py-3 bg-white rounded-r shadow-lg dark:bg-slate-700/50">
+                    "AeroGuardian Logistics is unreservedly committed to achieving the highest international standards of operational safety. Safety is our non-negotiable core value, prioritized above commercial or operational pressures. This commitment ensures the protection of our people, our assets, and our reputation."
+                </p>
+                <div class="mt-6 flex flex-col items-end">
+                    <!-- Handwritten Signature -->
+                    <div class="text-4xl text-blue-900 dark:text-blue-200 mb-2 pr-4 transform -rotate-3 hover:text-amber-500 transition-colors" style="font-family: 'Great Vibes', cursive;">
+                        Abdullah Mohamed
+                    </div>
+                    <div class="text-right border-t border-blue-200 dark:border-blue-700 pt-2 w-48">
+                        <div class="text-sm font-bold text-slate-900 dark:text-slate-100">Accountable Executive</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">CEO, AeroGuardian Logistics</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-3 max-w-2xl text-md text-slate-600 dark:text-slate-300">
+                <span class="font-bold text-blue-800 dark:text-blue-300">Effective Date:</span> January 2026. Use the tabs above to navigate the four core components of the Safety Management System.
+            </p>
+
+        </div>
+
+        <!-- 2. SAFETY POLICY SECTION (Pillars Only) -->
+        <div id="section-policy" class="content-section hidden animate-fade-in">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-8 border-b border-slate-200 dark:border-slate-700 pb-2">1. Safety Policy & Objectives</h2>
+            
+            <!-- Policy Pillars Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Accountability -->
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-t-4 border-blue-600 dark:bg-slate-800/70 dark:text-slate-200 dark:border-blue-400">
+                    <div class="text-4xl mb-4">👑</div>
+                    <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Accountability</h4>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm">
+                        The CEO holds ultimate responsibility and provides all necessary financial and human resources to maintain the SMS.
+                    </p>
+                </div>
+
+                <!-- Regulatory Compliance -->
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-t-4 border-green-600 dark:bg-slate-800/70 dark:text-slate-200 dark:border-green-400">
+                    <div class="text-4xl mb-4">⚖️</div>
+                    <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Regulatory Compliance</h4>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm">
+                        Strict adherence to national authorities (FAA, EASA) and ICAO standards, specifically <span class="font-semibold">ICAO Annex 19</span>.
+                    </p>
+                </div>
+
+                <!-- Just Culture -->
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-t-4 border-amber-500 dark:bg-slate-800/70 dark:text-slate-200 dark:border-amber-400">
+                    <div class="text-4xl mb-4">🤝</div>
+                    <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Just Culture</h4>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm">
+                        A confidential, non-punitive reporting system. Honest errors are protected; gross negligence and willful misconduct are not.
+                    </p>
+                </div>
+
+                <!-- Safety Objectives -->
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-t-4 border-purple-600 dark:bg-slate-800/70 dark:text-slate-200 dark:border-purple-400">
+                    <div class="text-4xl mb-4">🎯</div>
+                    <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Safety Objectives</h4>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm">
+                        Measurable Safety Performance Indicators (SPIs) and Targets (SPTs) reviewed semi-annually by the Executive Board.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. SAFETY RISK MANAGEMENT (SRM) SECTION -->
+        <div id="section-srm" class="content-section hidden animate-fade-in">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-8 border-b border-slate-200 dark:border-slate-700 pb-2">2. Safety Risk Management (SRM)</h2>
+            <!-- Intro Paragraph -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 mb-8 dark:bg-slate-700 dark:border-slate-600">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Proactive Risk Management</h3>
+                <p class="text-slate-600 dark:text-slate-300 text-sm">
+                    AGL uses a blend of Reactive, Proactive, and Predictive methods to identify hazards. 
+                    Below is our interactive Hazard Explorer and the official 5x5 Risk Assessment Matrix used to classify risks.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Column 1: Hazard Explorer -->
+                <div>
+                    <h4 class="text-md font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:bg-blue-800 dark:text-blue-100">STEP 1</span>
+                        Identify the Hazard
+                    </h4>
+                    
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-slate-700">
+                        <div class="p-4 bg-slate-50 border-b border-slate-200 dark:bg-slate-800 dark:border-slate-600">
+                            <label for="hazard-select" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Select Operational Category:</label>
+                            <select id="hazard-select" onchange="updateHazardDetail()" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border dark:bg-slate-600 dark:border-slate-500 dark:text-slate-200">
+                                <option value="cargo">Cargo Handling</option>
+                                <option value="ground">Ground Operations</option>
+                                <option value="human">Human Factors</option>
+                                <option value="infra">Infrastructure</option>
+                            </select>
+                        </div>
+                        <div class="p-6">
+                            <div id="hazard-content" class="animate-fade-in dark:text-slate-200">
+                                <!-- Content populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mitigation Example Box -->
+                    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6 dark:bg-blue-950 dark:border-blue-800 shadow-md">
+                        <h5 class="font-bold text-blue-900 dark:text-blue-100 text-sm uppercase tracking-wider mb-3">Mitigation in Action</h5>
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="text-red-600 font-bold dark:text-red-400 text-center">
+                                <span class="text-xl">15</span> (High)<br>
+                                <span class="text-xs font-normal text-slate-600 dark:text-slate-300">Incorrect DG Palletization</span>
+                            </div>
+                            <div class="text-4xl text-amber-500 dark:text-amber-400 font-thin">➔</div>
+                            <div class="text-green-600 font-bold dark:text-green-400 text-center">
+                                <span class="text-xl">6</span> (Medium)<br>
+                                <span class="text-xs font-normal text-slate-600 dark:text-slate-300">After Dual-Check Control</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: 5x5 Risk Matrix -->
+                <div>
+                    <h4 class="text-md font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:bg-blue-800 dark:text-blue-100">STEP 2</span>
+                        Assess Risk Level (Severity x Likelihood)
+                    </h4>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-lg overflow-x-auto dark:bg-slate-700">
+                        <div class="min-w-[300px]">
+                            <!-- Matrix Legend -->
+                            <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                <span>Likelihood ➔ (1:Rare - 5:Frequent)</span>
+                                <span>Severity ⬇ (1:Negligible - 5:Catastrophic)</span>
+                            </div>
+                            
+                            <!-- The Grid - Colors adjusted for a better heat map gradient -->
+                            <div class="grid grid-cols-5 gap-1 mb-6 text-center text-xs font-extrabold text-white">
+                                <!-- Row 5 (Catastrophic) -->
+                                <button onclick="showRiskInfo(5)" class="matrix-cell bg-amber-400 py-3 rounded-lg shadow-inner hover:z-20 transition">5</button>
+                                <button onclick="showRiskInfo(10)" class="matrix-cell bg-orange-500 py-3 rounded-lg shadow-inner hover:z-20 transition">10</button>
+                                <button onclick="showRiskInfo(15)" class="matrix-cell bg-red-600 py-3 rounded-lg shadow-inner hover:z-20 transition">15</button>
+                                <button onclick="showRiskInfo(20)" class="matrix-cell bg-red-800 py-3 rounded-lg shadow-inner hover:z-20 transition">20</button>
+                                <button onclick="showRiskInfo(25)" class="matrix-cell bg-red-900 py-3 rounded-lg shadow-inner hover:z-20 transition">25</button>
+
+                                <!-- Row 4 (Hazardous) -->
+                                <button onclick="showRiskInfo(4)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">4</button>
+                                <button onclick="showRiskInfo(8)" class="matrix-cell bg-amber-400 py-3 rounded-lg shadow-inner hover:z-20 transition">8</button>
+                                <button onclick="showRiskInfo(12)" class="matrix-cell bg-orange-600 py-3 rounded-lg shadow-inner hover:z-20 transition">12</button>
+                                <button onclick="showRiskInfo(16)" class="matrix-cell bg-red-700 py-3 rounded-lg shadow-inner hover:z-20 transition">16</button>
+                                <button onclick="showRiskInfo(20)" class="matrix-cell bg-red-800 py-3 rounded-lg shadow-inner hover:z-20 transition">20</button>
+
+                                <!-- Row 3 (Major) -->
+                                <button onclick="showRiskInfo(3)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">3</button>
+                                <button onclick="showRiskInfo(6)" class="matrix-cell bg-amber-400 py-3 rounded-lg shadow-inner hover:z-20 transition">6</button>
+                                <button onclick="showRiskInfo(9)" class="matrix-cell bg-amber-500 py-3 rounded-lg shadow-inner hover:z-20 transition">9</button>
+                                <button onclick="showRiskInfo(12)" class="matrix-cell bg-orange-600 py-3 rounded-lg shadow-inner hover:z-20 transition">12</button>
+                                <button onclick="showRiskInfo(15)" class="matrix-cell bg-red-600 py-3 rounded-lg shadow-inner hover:z-20 transition">15</button>
+
+                                <!-- Row 2 (Minor) -->
+                                <button onclick="showRiskInfo(2)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">2</button>
+                                <button onclick="showRiskInfo(4)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">4</button>
+                                <button onclick="showRiskInfo(6)" class="matrix-cell bg-amber-400 py-3 rounded-lg shadow-inner hover:z-20 transition">6</button>
+                                <button onclick="showRiskInfo(8)" class="matrix-cell bg-amber-400 py-3 rounded-lg shadow-inner hover:z-20 transition">8</button>
+                                <button onclick="showRiskInfo(10)" class="matrix-cell bg-orange-500 py-3 rounded-lg shadow-inner hover:z-20 transition">10</button>
+
+                                <!-- Row 1 (Negligible) -->
+                                <button onclick="showRiskInfo(1)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">1</button>
+                                <button onclick="showRiskInfo(2)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">2</button>
+                                <button onclick="showRiskInfo(3)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">3</button>
+                                <button onclick="showRiskInfo(4)" class="matrix-cell bg-lime-600 py-3 rounded-lg shadow-inner hover:z-20 transition">4</button>
+                                <button onclick="showRiskInfo(5)" class="matrix-cell bg-amber-400 py-3 rounded-lg shadow-inner hover:z-20 transition">5</button>
+                            </div>
+
+                            <!-- Dynamic Risk Definition Display -->
+                            <div id="risk-info-box" class="bg-slate-100 p-4 rounded-lg text-sm border-l-4 border-slate-300 dark:bg-slate-600 dark:border-slate-500 shadow-sm">
+                                <p class="text-slate-500 dark:text-slate-300">Click a number in the matrix to see the Risk Level and Required Action.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SAFETY ASSURANCE (SA) SECTION -->
+        <div id="section-assurance" class="content-section hidden animate-fade-in">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-8 border-b border-slate-200 dark:border-slate-700 pb-2">3. Safety Assurance (SA)</h2>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 mb-8 dark:bg-slate-700 dark:border-slate-600">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Verifying Performance</h3>
+                <p class="text-slate-600 dark:text-slate-300 text-sm">
+                    Safety Assurance verifies that our controls work. We do this by monitoring Safety Performance Indicators (SPIs), conducting Audits, and investigating incidents.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- SPI Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-lg dark:bg-slate-700">
+                    <h4 class="text-md font-bold text-slate-800 dark:text-slate-200 mb-4">SPI Monitor: Cargo Damage Rate</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Target: Less than 5 incidents per 1000 shipments.</p>
+                    
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="spiChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Assurance Activities Timeline -->
+                <div class="bg-white p-6 rounded-xl shadow-lg custom-scroll overflow-y-auto max-h-[400px] dark:bg-slate-700">
+                    <h4 class="text-md font-bold text-slate-800 dark:text-slate-200 mb-4">Assurance Activity Cycle</h4>
+                    
+                    <!-- Enhanced timeline line thickness and spacing -->
+                    <div class="relative border-l-4 border-blue-200 dark:border-blue-700 ml-6 space-y-10">
+                        <!-- Activity 1 -->
+                        <div class="ml-6 relative">
+                            <span class="absolute -left-9 top-1 bg-blue-600 w-4 h-4 rounded-full border-2 border-white ring-4 ring-blue-100 dark:ring-blue-900 dark:border-slate-700"></span>
+                            <h5 class="flex items-center text-slate-900 dark:text-slate-100 font-bold">SMS Audits <span class="ml-2 text-xs bg-blue-100 px-2 rounded-full text-blue-800 dark:bg-blue-900 dark:text-blue-200">Annually</span></h5>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Evaluation of SMS maturity and compliance with ICAO/national regulations.</p>
+                            <p class="text-xs text-blue-600 dark:text-blue-300 font-semibold mt-1">Output: Executive Review & Corrective Action Plan.</p>
+                        </div>
+                        <!-- Activity 2 -->
+                        <div class="ml-6 relative">
+                            <span class="absolute -left-9 top-1 bg-amber-500 w-4 h-4 rounded-full border-2 border-white ring-4 ring-amber-100 dark:ring-amber-900 dark:border-slate-700"></span>
+                            <h5 class="flex items-center text-slate-900 dark:text-slate-100 font-bold">Operational Audits <span class="ml-2 text-xs bg-amber-100 px-2 rounded-full text-amber-800 dark:bg-amber-900 dark:text-amber-200">Quarterly</span></h5>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Spot checks of ramp handling, loading, and forklift procedures.</p>
+                            <p class="text-xs text-blue-600 dark:text-blue-300 font-semibold mt-1">Output: Compliance Score (Target > 85%).</p>
+                        </div>
+                        <!-- Activity 3 -->
+                        <div class="ml-6 relative">
+                            <span class="absolute -left-9 top-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white ring-4 ring-green-100 dark:ring-green-900 dark:border-slate-700"></span>
+                            <h5 class="flex items-center text-slate-900 dark:text-slate-100 font-bold">Incident Investigation <span class="ml-2 text-xs bg-green-100 px-2 rounded-full text-green-800 dark:bg-green-900 dark:text-green-200">Event-Driven</span></h5>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Root Cause Analysis (RCA) for all reportable incidents and high-risk near misses.</p>
+                            <p class="text-xs text-blue-600 dark:text-blue-300 font-semibold mt-1">Output: Action closure within 45 days.</p>
+                         </div>
+                         <!-- Activity 4 -->
+                         <div class="ml-6 relative">
+                            <span class="absolute -left-9 top-1 bg-purple-500 w-4 h-4 rounded-full border-2 border-white ring-4 ring-purple-100 dark:ring-purple-900 dark:border-slate-700"></span>
+                            <h5 class="flex items-center text-slate-900 dark:text-slate-100 font-bold">Management of Change <span class="ml-2 text-xs bg-purple-100 px-2 rounded-full text-purple-800 dark:bg-purple-900 dark:text-purple-200">Prior to Change</span></h5>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Review of new routes, software, or equipment.</p>
+                            <p class="text-xs text-blue-600 dark:text-blue-300 font-semibold mt-1">Output: Head of Safety Sign-Off.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SAFETY PROMOTION SECTION -->
+        <div id="section-promotion" class="content-section hidden animate-fade-in">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-8 border-b border-slate-200 dark:border-slate-700 pb-2">4. Safety Promotion</h2>
+            <!-- Intro -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 mb-8 dark:bg-slate-700 dark:border-slate-600">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Building Culture & Competence</h3>
+                <p class="text-slate-600 dark:text-slate-300 text-sm">
+                    Safety Promotion ensures our people are trained and informed. We assess our culture biennially and recognize excellence through the Guardian Star Award.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Training & Communication Cards -->
+                <div class="space-y-6">
+                    <!-- Training -->
+                    <div class="bg-white p-5 rounded-xl shadow-lg border-l-4 border-indigo-500 dark:bg-slate-800/70 dark:border-indigo-400">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-200 flex items-center mb-3">
+                            <span class="text-xl mr-2">🎓</span> Training Program
+                        </h4>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                            <li class="flex items-start">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 rounded-full mr-2 mt-0.5 dark:bg-indigo-900 dark:text-indigo-100 font-semibold">Initial</span>
+                                All new hires (Mandatory).
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 rounded-full mr-2 mt-0.5 dark:bg-indigo-900 dark:text-indigo-100 font-semibold">Recurrent</span>
+                                Annually for all staff (Online + Workshop).
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 rounded-full mr-2 mt-0.5 dark:bg-indigo-900 dark:text-indigo-100 font-semibold">Specific</span>
+                                Quarterly specialized training for Dangerous Goods handlers.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Communication -->
+                    <div class="bg-white p-5 rounded-xl shadow-lg border-l-4 border-cyan-500 dark:bg-slate-800/70 dark:border-cyan-400">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-200 flex items-center mb-3">
+                            <span class="text-xl mr-2">📢</span> Communication Channels
+                        </h4>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="bg-slate-50 p-3 rounded-lg dark:bg-slate-900/50 shadow-inner">
+                                <div class="font-bold text-slate-700 dark:text-slate-200">Digital Alerts</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">Urgent warnings via mobile/email.</div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg dark:bg-slate-900/50 shadow-inner">
+                                <div class="font-bold text-slate-700 dark:text-slate-200">"Guardian Watch"</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">Monthly safety newsletter.</div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg col-span-2 dark:bg-slate-900/50 shadow-inner">
+                                <div class="font-bold text-slate-700 dark:text-slate-200">Digital Safety Boards</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">Real-time risk levels in hangars & breakrooms.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Culture Survey Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-lg dark:bg-slate-700">
+                    <h4 class="text-md font-bold text-slate-800 dark:text-slate-200 mb-2">Safety Culture Assessment Results</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Biennial survey measuring employee perceptions (Score out of 5).</p>
+                    
+                    <div class="chart-container">
+                        <canvas id="cultureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recognition Banner - Enhanced gradient and border -->
+            <div class="mt-8 bg-gradient-to-r from-amber-100 to-amber-50 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between border-2 border-amber-300 shadow-xl dark:from-amber-950 dark:to-amber-900 dark:border-amber-700">
+                <div class="mb-4 sm:mb-0">
+                    <h4 class="text-amber-800 dark:text-amber-200 font-bold text-lg">🌟 Guardian Star Award</h4>
+                    <p class="text-amber-700 dark:text-amber-300 text-sm">Recognizing employees who identify critical hazards or propose effective mitigation.</p>
+                </div>
+                <button class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200 hover:scale-[1.02] text-sm">
+                    Nominate a Colleague
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer - Added subtle inner shadow for distinction -->
+    <footer class="bg-slate-900 text-slate-400 py-8 mt-auto shadow-inner shadow-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <span class="font-bold text-slate-100">AeroGuardian Logistics</span> | Safety Management System
+            </div>
+            <div class="text-sm">
+                &copy; 2026 AeroGuardian Logistics. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA STORAGE ---
+        const hazards = {
+            cargo: {
+                title: "Cargo Handling Hazard",
+                example: "Incorrectly palletized Dangerous Goods (DG) shipment.",
+                consequence: "Structural damage to aircraft; fire/explosion risk; leakage of hazardous materials."
+            },
+            ground: {
+                title: "Ground Operations Hazard",
+                example: "Tug driver exceeding speed limit on the apron.",
+                consequence: "Collision with stationary aircraft; injury to ramp personnel; FOD dispersion."
+            },
+            human: {
+                title: "Human Factors Hazard",
+                example: "Shift worker error in verifying weight and balance sheet.",
+                consequence: "Center-of-Gravity (CG) outside limits; unstable flight profile; loss of control."
+            },
+            infra: {
+                title: "Infrastructure Hazard",
+                example: "Unannounced closure of a cargo ramp access gate.",
+                consequence: "Operational delays; bottlenecking; increased risk of vehicle congestion/collision."
+            }
+        };
+
+        // Simplified risk definitions using explicit Tailwind classes for full dark/light mode support
+        const riskDefinitions = {
+            low: { 
+                level: "Low (1-5)", 
+                action: "Acceptable. Routine monitoring by local Safety Officer.", 
+                classes: "border-green-500 text-green-800 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-slate-700" 
+            },
+            medium: { 
+                level: "Medium (6-10)", 
+                action: "Acceptable with Mitigation. Requires documented approval from Dept Head.", 
+                classes: "border-amber-500 text-amber-800 bg-amber-50 dark:border-amber-700 dark:text-amber-300 dark:bg-slate-700" 
+            },
+            high: { 
+                level: "High (12-15)", 
+                action: "Undesirable. Requires immediate temporary controls & Head of Safety approval.", 
+                classes: "border-red-500 text-red-800 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-slate-800" 
+            },
+            extreme: { 
+                level: "Extreme (16-25)", 
+                action: "UNACCEPTABLE. Operation must stop immediately until risk is mitigated.", 
+                classes: "border-red-800 text-red-900 bg-red-100 dark:border-red-900 dark:text-red-100 dark:bg-slate-800" 
+            }
+        };
+
+        // The downloadLatexReportTemplate function has been removed as requested.
+        
+        // --- THEME LOGIC (kept the same) ---
+        function setInitialTheme() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const storedTheme = localStorage.getItem('theme');
+            
+            let theme = 'light';
+            if (storedTheme === 'dark' || (storedTheme === null && prefersDark)) {
+                theme = 'dark';
+            }
+            
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                // Show sun icon in dark mode
+                document.getElementById('sun-icon').classList.remove('hidden');
+                document.getElementById('moon-icon').classList.add('hidden');
+            } else {
+                // Show moon icon in light mode
+                document.getElementById('moon-icon').classList.remove('hidden');
+                document.getElementById('sun-icon').classList.add('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('sun-icon').classList.add('hidden');
+                document.getElementById('moon-icon').classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('moon-icon').classList.add('hidden');
+                document.getElementById('sun-icon').classList.remove('hidden');
+            }
+            // Update charts after theme change
+            updateChartTheme(!isDark);
+            // Re-render hazard details to update inner classes (if visible)
+            updateHazardDetail();
+            // Re-render risk info box if active (optional, but robust)
+            const riskInfoBox = document.getElementById('risk-info-box');
+            if (riskInfoBox.innerHTML.includes('Risk Value:')) {
+                // Trigger an update with the currently selected risk value (defaulting to 25 if not known)
+                // Note: since we don't track the value, we reset it to a general click to refresh colors.
+                showRiskInfo(25);
+            } else {
+                 // Reset classes if it's showing the default text
+                 riskInfoBox.className = "bg-slate-100 p-4 rounded-lg text-sm border-l-4 border-slate-300 dark:bg-slate-600 dark:border-slate-500 shadow-sm";
+            }
+        }
+
+
+        // --- CORE NAVIGATION (kept the same) ---
+        function switchTab(tabId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.classList.add('hidden');
+            });
+            // Show selected section
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            // Update Nav State
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-slate-500');
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-slate-500');
+            }
+
+            // Close mobile menu if open
+            document.getElementById('mobile-menu').classList.add('hidden');
+
+            // Trigger chart resize/render if needed (Chart.js sometimes needs this when container becomes visible)
+            if (tabId === 'assurance' && window.spiChartInstance) {
+                window.spiChartInstance.resize();
+            }
+            if (tabId === 'promotion' && window.cultureChartInstance) {
+                window.cultureChartInstance.resize();
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // --- SRM INTERACTIVITY (kept the same) ---
+        function updateHazardDetail() {
+            const select = document.getElementById('hazard-select');
+            const data = hazards[select.value];
+            const container = document.getElementById('hazard-content');
+
+            // Determine dynamic classes needed inside the content based on theme
+            const isDark = document.documentElement.classList.contains('dark');
+            const exampleBgClass = isDark ? 'dark:bg-slate-800' : 'bg-slate-100';
+            const exampleBorderClass = isDark ? 'dark:border-slate-700' : 'border-slate-200';
+
+            container.innerHTML = `
+                <h5 class="font-bold text-slate-800 dark:text-slate-100 text-lg mb-2">${data.title}</h5>
+                <div class="mb-3">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Example</span>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 p-3 rounded-lg border ${exampleBgClass} ${exampleBorderClass} shadow-inner">${data.example}</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Potential Consequence</span>
+                    <p class="text-sm text-slate-700 dark:text-slate-300">${data.consequence}</p>
+                </div>
+            `;
+        }
+
+        function showRiskInfo(value) {
+            const infoBox = document.getElementById('risk-info-box');
+            let def = null;
+
+            if (value <= 5) def = riskDefinitions.low;
+            else if (value <= 10) def = riskDefinitions.medium;
+            else if (value <= 15) def = riskDefinitions.high;
+            else def = riskDefinitions.extreme;
+
+            // Use the pre-defined classes
+            infoBox.className = `p-4 rounded-xl text-sm border-l-4 shadow-md transition-all duration-300 ${def.classes}`;
+            infoBox.innerHTML = `
+                <div class="font-bold text-lg mb-1">Risk Value: ${value} - ${def.level}</div>
+                <div class="font-semibold">Action Required:</div>
+                <div>${def.action}</div>
+            `;
+        }
+        
+        // --- CHART.JS THEME UPDATE (kept the same) ---
+        function updateChartTheme(isDark) {
+            // Dark mode colors for chart elements
+            const color = isDark ? '#f1f5f9' : '#334155'; // slate-100 vs slate-700
+            const gridColor = isDark ? 'rgba(82, 82, 91, 0.5)' : 'rgba(226, 232, 240, 0.5)'; // zinc-700 vs slate-200
+            
+            // --- SPI Chart ---
+            if (window.spiChartInstance) {
+                window.spiChartInstance.options.scales.y.ticks.color = color;
+                window.spiChartInstance.options.scales.y.grid.color = gridColor;
+                window.spiChartInstance.options.scales.x.ticks.color = color;
+                window.spiChartInstance.options.scales.x.grid.color = gridColor;
+                window.spiChartInstance.options.plugins.legend.labels.color = color;
+                window.spiChartInstance.update();
+            }
+
+            // --- Culture Chart (Radar) ---
+            if (window.cultureChartInstance) {
+                window.cultureChartInstance.options.scales.r.pointLabels.color = color;
+                window.cultureChartInstance.options.scales.r.grid.color = gridColor;
+                window.cultureChartInstance.options.scales.r.angleLines.color = gridColor;
+                window.cultureChartInstance.options.scales.r.ticks.color = color;
+                window.cultureChartInstance.options.plugins.legend.labels.color = color;
+                window.cultureChartInstance.update();
+            }
+        }
+
+        // --- CHART.JS INITIALIZATION (kept the same) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initialize Theme BEFORE anything else
+            setInitialTheme();
+
+            // 2. Set the initial tab to 'company'
+            switchTab('company');
+            
+            // 3. Initialize Hazard Detail (needs theme check for inner classes)
+            updateHazardDetail();
+            
+            // Determine initial theme for chart rendering
+            const isDark = document.documentElement.classList.contains('dark');
+            const initialTextColor = isDark ? '#f1f5f9' : '#334155';
+            const initialGridColor = isDark ? 'rgba(82, 82, 91, 0.5)' : 'rgba(226, 232, 240, 0.5)';
+
+            // 4. Assurance Chart (SPI Trend)
+            const ctxSPI = document.getElementById('spiChart').getContext('2d');
+            window.spiChartInstance = new Chart(ctxSPI, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Cargo Damage Rate (per 1000)',
+                        data: [6.2, 5.8, 4.5, 4.2, 3.8, 3.5], // Simulating improvement
+                        borderColor: '#2563eb', // Blue-600
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4 // Smoother lines
+                    },
+                    {
+                        label: 'Target Limit',
+                        data: [5, 5, 5, 5, 5, 5],
+                        borderColor: '#ef4444', // Red-500
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: initialTextColor } // Set initial legend color
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: { display: true, text: 'Incidents per 1000' },
+                            ticks: { color: initialTextColor }, // Set initial tick color
+                            grid: { color: initialGridColor }    // Set initial grid color
+                        },
+                        x: {
+                            ticks: { color: initialTextColor },
+                            grid: { color: initialGridColor }
+                        }
+                    }
+                }
+            });
+
+            // 5. Culture Chart (Radar)
+            const ctxCulture = document.getElementById('cultureChart').getContext('2d');
+            window.cultureChartInstance = new Chart(ctxCulture, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Mgmt Commitment', 
+                        'Just Culture Trust', 
+                        'Communication', 
+                        'Training Effectiveness', 
+                        'Reporting Ease'
+                    ],
+                    datasets: [{
+                        label: '2024 Survey Results',
+                        data: [4.5, 4.2, 3.8, 4.6, 4.0],
+                        fill: true,
+                        backgroundColor: 'rgba(217, 119, 6, 0.2)', // Amber-600 low opacity
+                        borderColor: '#d97706',
+                        pointBackgroundColor: '#d97706',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#d97706'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: { borderWidth: 3 }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: initialGridColor },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            ticks: { stepSize: 1, color: initialTextColor },
+                            pointLabels: { color: initialTextColor }, // Set initial point label color
+                            grid: { color: initialGridColor }
+                        }
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: initialTextColor } // Set initial legend color
+                        }
+                    }
+                }
+            });
+        });
+
+    </script>
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- Application Structure Plan: Dashboard layout with 5 tabs: Company Profile, and the 4 SMS pillars. -->
+</body>
+</html>
